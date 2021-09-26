@@ -16,21 +16,25 @@ def insertdata(data, field, table):
 #update the same row
 def updatedata(cid, cname, data, table):
   sql = f"UPDATE {table} SET {cname}=(%s) where chatid=(%s);" #%s=data,%s=cid
-  val = (data, cid)# converting into tuple for sql injection
+  val = (data,cid)# converting into tuple for sql injection
+  print(sql,cid,cname,data,table)
   cur.execute(sql, val)
   conn.commit()
 #Verify the data
-def checkdata(data, field):
+def checkdata(data, field,table):
   uval = (data,) #to convert it into tuple becoz one data is not considered as tuple
-  sql = f"select * from signup where {field}=%s" #%s=data
-  cur.execute(sql, uval) 
+  sql = f"select * from {table} where {field}=%s" #%s=data
+  cur.execute(sql,uval) 
   data = cur.fetchall()
   if(len(data) == 0):
     return 0
   return 1
 # display field if already exist
-def getfield(data,field):
-  sql=f"select {field} from signup where chatid={data}"
+def getfield(data,field,table):
+  sql=f"select {field} from {table} where chatid={data}"
   cur.execute(sql)
   data = cur.fetchall()
   return data[0][0]
+def deleterow(row,data,table):
+  sql=f"delete from {table} where {row}={data}"
+  cur.execute(sql)
