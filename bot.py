@@ -150,17 +150,19 @@ def BidAsk(message):
         depth = client.get_order_book(symbol=message.text.upper())
         bot.send_message(message.chat.id,"Top 5 Bid and Ask :")
         flag3=1
-        bot.send_message(message.chat.id,"BIDs: ")
+        str1='BIDs'
+        str2='ASKs'
         for i in depth['bids']:
              if(flag3<=5):
-                bot.send_message(message.chat.id,f"\n{flag3}) Price- {i[0]}\t Qty- {i[1]}")
+                str1+=f"\n{flag3}) Price- {i[0]}\t Qty- {i[1]}"
                 flag3+=1
-        flag3=1
-        bot.send_message(message.chat.id,"ASKs: ")
+        bot.send_message(message.chat.id,str1)
+        flag3=1 
         for i in depth['asks']:
              if(flag3<=5):
-                bot.send_message(message.chat.id,f"\n{flag3}) Price- {i[0]}\t Qty- {i[1]}")
+                str2+=f"\n{flag3}) Price- {i[0]}\t Qty- {i[1]}"
                 flag3+=1
+        bot.send_message(message.chat.id,str2)
     except:
         bot.send_message(message.chat.id,"Invalid Pair")
         msg=bot.send_message(message.chat.id,"Enter the Pair Again(Ex- BTCUSDT): ")
@@ -218,21 +220,23 @@ def CryptoSearch(message):
     text = res.text
     data = json.loads(text)
     count=1
-    count1=0
     for i in data['items']:
         if(count<=5):
             bot.send_message(message.chat.id,i['link'])
             count+=1
         else:
             break
-    msg = bot.send_message(message.chat.id, "For more Results Press (y): ")
-    if(msg.text=='y' or msg.text=='Y'):
-        for i in data['items']:
-            if(count1>count):
-                bot.send_message(message.chat.id,i['link'])
-            count1+=1
-    else:
-        return
+    msg = bot.send_message(message.chat.id, "Show More Results (y/n): ")
+    bot.register_next_step_handler(msg,Get_More)
+    def Get_More(message):
+        count1=1
+        if(message.text=='y' or message.text=='Y'):
+            for i in data['items']:
+                if(count1>5):
+                    bot.send_message(message.chat.id,i['link'])
+                count1+=1
+        else:
+            return
 bot.polling()
 # url = f'https://customsearch.googleapis.com/customsearch/v1?cx=3233e5aefb1f10742&q=bitcoin&key={confi.GsearchApi}'
 # res = requests.get(url)
