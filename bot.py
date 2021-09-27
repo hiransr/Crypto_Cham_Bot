@@ -86,13 +86,6 @@ def passw(message):
         db.deleterow("chatid",message.chat.id,"login")
         bot.register_next_step_handler(msg,user)
 ### Binance API
-
-
-# depth = client.get_order_book(symbol='TROYUSDT') #5bids+5asks
-# trades = client.get_recent_trades(symbol='BNBBTC') #qty,price,id (recent trade)
-# tickers = client.get_ticker()
-# info1 = client.get_symbol_info('BNBBTC'
-#bot.send_message(message.chat.id, "/Gsearch /Price /Bids-Asks /RecentTrade /TradeHIstory /AddFav")
 @bot.message_handler(commands=['Coins'])
 def CoinDetails(message):
     if(db.getfield(message.chat.id,'status','login')=='yes'):
@@ -113,13 +106,16 @@ def PrintPair(message):
             pairlist+=f"\n-> <code>{i['symbol']}</code>"
             flag=1
     if(flag==1):
-        bot.send_message(message.chat.id,f'Available Pairs are \n {pairlist}')
-        msg=bot.send_message(message.chat.id,"Enter the Pair(Ex- BTCUSDT): ")
-        bot.register_next_step_handler(msg,PrintPrice)
+        bot.send_message(message.chat.id,f'Available Pairs are ..... {pairlist}')
+        bot.send_message(message.chat.id,"\nGet Price - /Price \nRecent Trade - /Recent_Trade \nBid & Ask - /Bid_Ask")
     else:
         bot.send_message(message.chat.id,'No Such Coin Available')
         msg=bot.send_message(message.chat.id,"Enter The Symbol Again : ")
         bot.register_next_step_handler(msg,PrintPair)
+@bot.message_handler(commands=['Price'])
+def Get_Price(message):    
+    msg=bot.send_message(message.chat.id,"Enter the Pair(Ex- BTCUSDT): ")
+    bot.register_next_step_handler(msg,PrintPrice)                                                                                                                
 def PrintPrice(message):
     try:
         info = client.get_symbol_ticker(symbol=message.text.upper())
@@ -128,6 +124,47 @@ def PrintPrice(message):
         bot.send_message(message.chat.id,"Invalid Pair")
         msg=bot.send_message(message.chat.id,"Enter the Pair Again(Ex- BTCUSDT): ")
         bot.register_next_step_handler(msg,PrintPrice)
+@bot.message_handler(commands=['Recent_Trade'])
+def Get_RTrade(message): 
+    msg=bot.send_message(message.chat.id,"Enter the Pair(Ex- BTCUSDT): ")
+    bot.register_next_step_handler(msg,RTrade)
+def RTrade(message):
+    try:
+        trades = client.get_recent_trades(symbol=message.text.upper())
+        bot.send_message(message.chat.id,"Recent Trades are ")
+        flag2=1
+        for i in trades:
+             if(flag2<=5): 
+                bot.send_message(message.chat.id,f"{flag2}) ID -> {i['id']} \n Price -> {i['price']}\n Quantity -> {i['qty']} ")
+                flag2+=1
+    except:
+        bot.send_message(message.chat.id,"Invalid Pair")
+        msg=bot.send_message(message.chat.id,"Enter the Pair Again(Ex- BTCUSDT): ")
+        bot.register_next_step_handler(msg,RTrade)
+@bot.message_handler(commands=['Bid_Ask'])
+def get_BidAsk(message):
+    msg=bot.send_message(message.chat.id,"Enter the Pair(Ex- BTCUSDT): ")
+    bot.register_next_step_handler(msg,BidAsk)
+def BidAsk(message):
+    try:
+        depth = client.get_order_book(symbol=message.text.upper())
+        bot.send_message(message.chat.id,"Top 5 Bid and Ask :")
+        flag3=1
+        bot.send_message(message.chat.id,"BIDs: ")
+        for i in depth['bids']:
+             if(flag3<=5):
+                bot.send_message(message.chat.id,f"\n{flag3}) Price- {i[0]}\t Qty- {i[1]}")
+                flag3+=1
+        flag3=1
+        bot.send_message(message.chat.id,"ASKs: ")
+        for i in depth['asks']:
+             if(flag3<=5):
+                bot.send_message(message.chat.id,f"\n{flag3}) Price- {i[0]}\t Qty- {i[1]}")
+                flag3+=1
+    except:
+        bot.send_message(message.chat.id,"Invalid Pair")
+        msg=bot.send_message(message.chat.id,"Enter the Pair Again(Ex- BTCUSDT): ")
+        bot.register_next_step_handler(msg,BidAsk)
 #Coinmarketcap api
 @bot.message_handler(commands=['Sites'])
 def Off_Site(message):
@@ -180,13 +217,22 @@ def CryptoSearch(message):
     res = requests.get(url)
     text = res.text
     data = json.loads(text)
-    count=0
+    count=1
+    count1=0
     for i in data['items']:
         if(count<=5):
             bot.send_message(message.chat.id,i['link'])
             count+=1
         else:
             break
+    msg = bot.send_message(message.chat.id, "For more Results Press (y): ")
+    if(msg.text=='y' or msg.text=='Y'):
+        for i in data['items']:
+            if(count1>count):
+                bot.send_message(message.chat.id,i['link'])
+            count1+=1
+    else:
+        return
 bot.polling()
 # url = f'https://customsearch.googleapis.com/customsearch/v1?cx=3233e5aefb1f10742&q=bitcoin&key={confi.GsearchApi}'
 # res = requests.get(url)
