@@ -36,5 +36,21 @@ def getfield(data,field,table):
   data = cur.fetchall()
   return data[0][0]
 def deleterow(row,data,table):
-  sql=f"delete from {table} where {row}={data}"
+  sql=f"delete from {table} where {row}=(%s)"
+  val=(data,)
+  cur.execute(sql,val)
+def ShowMore(cid,pgno,cname):
+  val =(cid,pgno,cname)
+  sql=f"INSERT INTO showmore VALUES (%s,%s,%s)"
+  cur.execute(sql,val)
+  conn.commit()
+def getfav(data):
+  sql=f"select coinlist from fav where username='{data}'"
   cur.execute(sql)
+  data = cur.fetchall()
+  return data[0][0]
+def updatefav(coinlist,username):
+  sql = f"UPDATE fav SET coinlist=(%s) where username=(%s);" #%s=data,%s=cid
+  val = (coinlist,username)# converting into tuple for sql injection
+  cur.execute(sql, val)
+  conn.commit()
