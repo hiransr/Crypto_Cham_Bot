@@ -13,13 +13,15 @@ from requests.exceptions import ConnectionError, Timeout, TooManyRedirects
 from PIL import Image
 from binance.client import Client
 client = Client(confi.BApi, confi.BsKey)
+yt_channels=['BitBoy Crypto','Coin Bureau','Alt Coins Daily','Data Dash','Sheldon Evans','Ivan on Tech','Benjamin Cowen','Andreas Antonopoulos','Anthony Pompliano','EllioTrades Crypto','Digital Asset News','Altcoin Buzz','Box Mining','Crypto Lark','Crypto Zombie','The Modern Investor','TheChartGuys','Hashoshi']
+yt_channel_link=['UCjemQfjaXAzA-95RKoy9n_g','UCqK_GSMbpiV8spgD3ZGloSw','UCjemQfjaXAzA-95RKoy9n_g','UCbLhGKVY-bJPcawebgtNfbw','UCCatR7nWbYrkVXdxXb4cGXw/featured','UCZ3fejCy_P5xhv9QF-V6-YA','UCrYmtJBtLdtm2ov84ulV-yg','UCRvqjQPSeaWn-uEx-w0XOIg','UCJWCJCWOxBYSi5DhCieLOLQ','UCevXpeL8cNyAnww-NqJ4m2w','UCMtJYS0PrtiUwlk6zjGDEMA','UCJgHxpqfhWEEjYH9cLXqhIQ','UCGyqEtcGQQtXyUwvcy7Gmyg','UCxODjeUwZHk3p-7TU-IsDOA','UCl2oCaw8hdR_kbqyqd2klIA','UCiUnrCUGCJTCC7KjuW493Ww','UC-5HLi3buMzdxjdTdic3Aig','UCnqZ2hx679DqRi6khRUNw2g','UCQNHKsYDGlWefzv9MAaOJGA']
 bot = telebot.TeleBot(confi.telegramapi, parse_mode="HTML") # You can set parse_mode by default. HTML or MARKDOWN
-@bot.message_handler(commands=['start', 'help'])
-def send_welcome(message):
-	bot.reply_to(message, "Hlo")
-
+############################### MAIN MENU #################################
+@bot.message_handler(commands=['mainmenu'])
+def mm(message):
+    bot.send_message(message.chat.id,"******** MAIN MENU ********\n1)/signup\n2)/login\n3)/coins\n4)/official_sites\n5)/g_search\n6)/fav_coin\n7)/youtube\n8)/help\n9)/logout ")
 #Sign-up and Password
-@bot.message_handler(commands=['Signup'])
+@bot.message_handler(commands=['signup'])
 def signup(message):
     if(db.checkdata(message.chat.id,"chatid","signup")):
         bot.send_message(message.chat.id,"User Already exist")
@@ -61,7 +63,7 @@ def checkotp(message):
         msg = bot.send_message(message.chat.id, "Invalid Otp \nEnter again: ")
         bot.register_next_step_handler(msg,checkotp)
 #Login
-@bot.message_handler(commands=['Login'])
+@bot.message_handler(commands=['login'])
 def login(message):
     if(db.checkdata(message.chat.id,'chatid','login')):
         if(db.getfield(message.chat.id,'status','login')=='no'):
@@ -90,7 +92,7 @@ def passw(message):
         db.deleterow("chatid",message.chat.id,"login")
         bot.register_next_step_handler(msg,user)
 ### Binance API
-@bot.message_handler(commands=['Coins'])
+@bot.message_handler(commands=['coins'])
 def CoinDetails(message):
     if(db.getfield(message.chat.id,'status','login')=='yes'):
         msg=bot.send_message(message.chat.id,"Enter The Coin Symbol: ")
@@ -111,12 +113,12 @@ def PrintPair(message):
             flag=1
     if(flag==1):
         bot.send_message(message.chat.id,f'Available Pairs are ..... {pairlist}')
-        bot.send_message(message.chat.id,"\nGet Price - /Price \nRecent Trade - /Recent_Trade \nBid & Ask - /Bid_Ask")
+        bot.send_message(message.chat.id,"\nGet Price - /price \nRecent Trade - /recent_trade \nBid & Ask - /bid_ask")
     else:
         bot.send_message(message.chat.id,'No Such Coin Available')
         msg=bot.send_message(message.chat.id,"Enter The Symbol Again : ")
         bot.register_next_step_handler(msg,PrintPair)
-@bot.message_handler(commands=['Price'])
+@bot.message_handler(commands=['price'])
 def Get_Price(message):    
     msg=bot.send_message(message.chat.id,"Enter the Pair(Ex- BTCUSDT): ")
     bot.register_next_step_handler(msg,PrintPrice)                                                                                                                
@@ -128,7 +130,7 @@ def PrintPrice(message):
         bot.send_message(message.chat.id,"Invalid Pair")
         msg=bot.send_message(message.chat.id,"Enter the Pair Again(Ex- BTCUSDT): ")
         bot.register_next_step_handler(msg,PrintPrice)
-@bot.message_handler(commands=['Recent_Trade'])
+@bot.message_handler(commands=['recent_trade'])
 def Get_RTrade(message): 
     msg=bot.send_message(message.chat.id,"Enter the Pair(Ex- BTCUSDT): ")
     bot.register_next_step_handler(msg,RTrade)
@@ -145,7 +147,7 @@ def RTrade(message):
         bot.send_message(message.chat.id,"Invalid Pair")
         msg=bot.send_message(message.chat.id,"Enter the Pair Again(Ex- BTCUSDT): ")
         bot.register_next_step_handler(msg,RTrade)
-@bot.message_handler(commands=['Bid_Ask'])
+@bot.message_handler(commands=['bid_ask'])
 def get_BidAsk(message):
     msg=bot.send_message(message.chat.id,"Enter the Pair(Ex- BTCUSDT): ")
     bot.register_next_step_handler(msg,BidAsk)
@@ -171,8 +173,8 @@ def BidAsk(message):
         bot.send_message(message.chat.id,"Invalid Pair")
         msg=bot.send_message(message.chat.id,"Enter the Pair Again(Ex- BTCUSDT): ")
         bot.register_next_step_handler(msg,BidAsk)
-#Coinmarketcap api
-@bot.message_handler(commands=['Sites'])
+######################## Coinmarketcap api ################################
+@bot.message_handler(commands=['official_sites'])
 def Off_Site(message):
     if(db.getfield(message.chat.id,'status','login')=='yes'):
         msg=bot.send_message(message.chat.id,"Enter The Coin Symbol: ")
@@ -206,8 +208,8 @@ def CoinSites(message):
             bot.send_message(message.chat.id,f"Technical Documentation : {i}")
     except (ConnectionError, Timeout, TooManyRedirects) as e:
         print(e)
-#Search API
-@bot.message_handler(commands=['G_Search'])
+############################## Google Search API #######################################
+@bot.message_handler(commands=['g_search'])
 def Gsearch(message):
     if(db.getfield(message.chat.id,'status','login')=='yes'):
         msg=bot.send_message(message.chat.id,"Enter the Coin to be Searched: ")
@@ -255,7 +257,9 @@ def Get_More(message):
                 count+=1
             else:
                 break
-@bot.message_handler(commands=['Fav_Coin'])
+################################ FAV ####################################
+
+@bot.message_handler(commands=['fav_coin'])
 def Edit_Fav(message):
     if(db.getfield(message.chat.id,'status','login')=='yes'):
         msg=bot.send_message(message.chat.id,"1) Add to List\n2) Remove from List")
@@ -279,7 +283,8 @@ def Edit_Fav_Choice(message):
           msg=bot.send_message(message.chat.id,f"Your Favourite List:\n{print_list}\nEnter the Pair to Remove:")
           bot.register_next_step_handler(msg,removefavpair)
     else:
-        pass #invlid choice
+        msg=bot.send_message(message.chat.id,"Invalid Choice!!\nEnter again: ")
+        bot.register_next_step_handler(msg,Edit_Fav_Choice)
 def PrintFavPair(message):
     flag=0
     prices = client.get_all_tickers()
@@ -337,6 +342,69 @@ def removefavpair(message):
         bot.send_message(message.chat.id,"Invalid Pair")
         msg=bot.send_message(message.chat.id,"Enter the Pair Again(Ex- BTCUSDT): ")
         bot.register_next_step_handler(msg,removefavpair)
+@bot.message_handler(commands=['see_my_fav_list'])
+def Show_Fav_Coin(message):
+    if(db.getfield(message.chat.id,'status','login')=='yes'):
+        bot.send_message(message.chat.id,"Your List:")
+        user_name=db.getfield(message.chat.id,'username','login')
+        if(db.checkdata(user_name,'username','fav')):
+            coin_list=db.getfav(user_name)
+            coin_list=coin_list.split(",")
+            for coin in coin_list:
+                info = client.get_symbol_ticker(symbol=coin.upper())
+                bot.send_message(message.chat.id,f"Coin Name: {coin.upper()}      Price: {info['price']}\n")
+    else:
+        if(db.getfield(message.chat.id,'status','login')=='no'):
+            db.deleterow("chatid",message.chat.id,"login")
+        bot.send_message(message.chat.id,'Not logged-in')
+        msg = bot.send_message(message.chat.id, "Enter Your UserName:  ")
+        bot.register_next_step_handler(msg,user)
+############################ YOUTUBE #######################################
+@bot.message_handler(commands=['youtube'])
+def yt_menu(message):
+    bot.send_message(message.chat.id,f"1)/channel_list\n2)/yt_search")
+@bot.message_handler(commands=['channel_list'])
+def Channel_List(message):
+    if(db.getfield(message.chat.id,'status','login')=='yes'):
+        bot.send_message(message.chat.id,"Top 20 channels:\n ")
+        for i in range(0,len(yt_channels)):
+            bot.send_message(message.chat.id,f"{yt_channels[i]} - https://www.youtube.com/channel/{yt_channel_link[i]}")
+    else:
+        if(db.getfield(message.chat.id,'status','login')=='no'):
+            db.deleterow("chatid",message.chat.id,"login")
+        bot.send_message(message.chat.id,'Not logged-in')
+        msg = bot.send_message(message.chat.id, "Enter Your UserName:  ")
+        bot.register_next_step_handler(msg,user)
+@bot.message_handler(commands=['yt_search'])
+def YT_Search(message):
+    if(db.getfield(message.chat.id,'status','login')=='yes'):
+        msg=bot.send_message(message.chat.id,"Enter a keyword to Search: ")
+        bot.register_next_step_handler(msg,ytsearch)
+    else:
+        if(db.getfield(message.chat.id,'status','login')=='no'):
+            db.deleterow("chatid",message.chat.id,"login")
+        bot.send_message(message.chat.id,'Not logged-in')
+        msg = bot.send_message(message.chat.id, "Enter Your UserName:  ")
+        bot.register_next_step_handler(msg,user)   
+def ytsearch(message):
+    url = f'https://youtube.googleapis.com/youtube/v3/search?part=snippet&maxResults=40&q={message.text}&key={confi.youtubeapi}' #channel result count
+    res = requests.get(url)
+    text = res.text
+    data = json.loads(text)
+    for result in data['items']:
+        if(result["snippet"]['channelTitle'] in yt_channels):
+            bot.send_message(message.chat.id,f"https://www.youtube.com/watch?v={result['id']['videoId']}")
+@bot.message_handler(commands=['Help'])
+def help(message):
+    bot.send_message(message.chat.id,"Hlo all I am here to make users friendly crypto service..................")
+@bot.message_handler(commands=['logout'])
+def logout(message):
+    if(db.getfield(message.chat.id,'status','login')=='yes'):
+        db.deleterow('chatid',message.chat.id,'login')
+        bot.send_message(message.chat.id,"Successfully Logged out!!")
+    else:
+        if(db.getfield(message.chat.id,'status','login')=='no'):
+            db.deleterow("chatid",message.chat.id,"login")
 bot.polling()
 # url = f'https://customsearch.googleapis.com/customsearch/v1?cx=3233e5aefb1f10742&q=bitcoin&key={confi.GsearchApi}'
 # res = requests.get(url)
