@@ -39,6 +39,7 @@ def deleterow(row,data,table):
   sql=f"delete from {table} where {row}=(%s)"
   val=(data,)
   cur.execute(sql,val)
+  conn.commit()
 def ShowMore(cid,pgno,cname):
   val =(cid,pgno,cname)
   sql=f"INSERT INTO showmore VALUES (%s,%s,%s)"

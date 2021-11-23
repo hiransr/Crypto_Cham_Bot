@@ -397,6 +397,7 @@ def ytsearch(message):
 @bot.message_handler(commands=['Help'])
 def help(message):
     bot.send_message(message.chat.id,"Hlo all I am here to make users friendly crypto service..................")
+
 @bot.message_handler(commands=['logout'])
 def logout(message):
     if(db.getfield(message.chat.id,'status','login')=='yes'):
@@ -406,9 +407,5 @@ def logout(message):
         if(db.getfield(message.chat.id,'status','login')=='no'):
             db.deleterow("chatid",message.chat.id,"login")
 bot.polling()
-# url = f'https://customsearch.googleapis.com/customsearch/v1?cx=3233e5aefb1f10742&q=bitcoin&key={confi.GsearchApi}'
-# res = requests.get(url)
-# text = res.text
-# data = json.loads(text)
-# for i in data['items']:
+
     
