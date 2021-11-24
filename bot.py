@@ -17,9 +17,9 @@ yt_channels=['BitBoy Crypto','Coin Bureau','Alt Coins Daily','Data Dash','Sheldo
 yt_channel_link=['UCjemQfjaXAzA-95RKoy9n_g','UCqK_GSMbpiV8spgD3ZGloSw','UCjemQfjaXAzA-95RKoy9n_g','UCbLhGKVY-bJPcawebgtNfbw','UCCatR7nWbYrkVXdxXb4cGXw/featured','UCZ3fejCy_P5xhv9QF-V6-YA','UCrYmtJBtLdtm2ov84ulV-yg','UCRvqjQPSeaWn-uEx-w0XOIg','UCJWCJCWOxBYSi5DhCieLOLQ','UCevXpeL8cNyAnww-NqJ4m2w','UCMtJYS0PrtiUwlk6zjGDEMA','UCJgHxpqfhWEEjYH9cLXqhIQ','UCGyqEtcGQQtXyUwvcy7Gmyg','UCxODjeUwZHk3p-7TU-IsDOA','UCl2oCaw8hdR_kbqyqd2klIA','UCiUnrCUGCJTCC7KjuW493Ww','UC-5HLi3buMzdxjdTdic3Aig','UCnqZ2hx679DqRi6khRUNw2g','UCQNHKsYDGlWefzv9MAaOJGA']
 bot = telebot.TeleBot(confi.telegramapi, parse_mode="HTML") # You can set parse_mode by default. HTML or MARKDOWN
 ############################### MAIN MENU #################################
-@bot.message_handler(commands=['mainmenu'])
+@bot.message_handler(commands=['mainmenu','start'])
 def mm(message):
-    bot.send_message(message.chat.id,"******** MAIN MENU ********\n1)/signup\n2)/login\n3)/coins\n4)/official_sites\n5)/g_search\n6)/fav_coin\n7)/youtube\n8)/help\n9)/logout ")
+    bot.send_message(message.chat.id,"******** MAIN MENU ********\n1)/signup\n2)/login\n3)/coins\n4)/official_sites\n5)/g_search\n6)/fav_coin\n7)/youtube\n8)/view_fav\n9)/help\n10)/logout ")
 #Sign-up and Password
 @bot.message_handler(commands=['signup'])
 def signup(message):
@@ -85,12 +85,21 @@ def user(message):
         bot.register_next_step_handler(msg,user)
 def passw(message):
     if(db.checkdata(message.text,"pass",'signup')):
-        db.updatedata(message.chat.id,"status","yes","login")
-        bot.send_message(message.chat.id,"Login Successful")
+        msg = bot.send_message(message.chat.id, "Enter the Totp: ")
+        bot.register_next_step_handler(msg,logintotp)
     else:
         msg=bot.send_message(message.chat.id,"Incorrect Username and Password \nEnter again: ")
         db.deleterow("chatid",message.chat.id,"login")
         bot.register_next_step_handler(msg,user)
+def logintotp(message):
+    username=db.getfield(message.chat.id,"username",'login')
+    totp = pyotp.TOTP(db.gettotp(username))
+    if(totp.verify(message.text)):
+        db.updatedata(message.chat.id,"status","yes","login")
+        bot.send_message(message.chat.id,"Login Successful")
+    else:
+        msg=bot.send_message(message.chat.id,"Incorrect Totp \nEnter again: ")
+        bot.register_next_step_handler(msg,logintotp)
 ### Binance API
 @bot.message_handler(commands=['coins'])
 def CoinDetails(message):
@@ -258,7 +267,30 @@ def Get_More(message):
             else:
                 break
 ################################ FAV ####################################
-
+@bot.message_handler(commands=['view_fav'])
+def viewfav(message):
+    if(db.getfield(message.chat.id,'status','login')=='yes'):
+        user_name=db.getfield(message.chat.id,'username','login')
+        if(db.checkdata(user_name,'username','fav')):
+            print("hi")
+            coinformat=[]
+            coin_list=db.getfav(user_name)
+            if(coin_list):
+                coin_list=coin_list.split(",")
+                for coin in coin_list:
+                    info = client.get_symbol_ticker(symbol=coin)
+                    coinformat.append(f"Coin Name - {coin}\t\t\t Price - {info['price']} ")
+                bot.send_message(message.chat.id,("\n\n").join(coinformat))
+            else:
+                bot.send_message(message.chat.id,'Opps!! Your Favourite list is Empty!!\nTo Create your list /fav_coin')
+        else:
+            bot.send_message(message.chat.id,'Opps!! Your Favourite list is Empty!!\nTo Create your list /fav_coin')
+    else:
+        if(db.getfield(message.chat.id,'status','login')=='no'):
+            db.deleterow("chatid",message.chat.id,"login")
+        bot.send_message(message.chat.id,'Not logged-in')
+        msg = bot.send_message(message.chat.id, "Enter Your UserName:  ")
+        bot.register_next_step_handler(msg,user)
 @bot.message_handler(commands=['fav_coin'])
 def Edit_Fav(message):
     if(db.getfield(message.chat.id,'status','login')=='yes'):
@@ -307,7 +339,10 @@ def AddFavList(message):
         user_name=db.getfield(message.chat.id,'username','login')
         if(db.checkdata(user_name,'username','fav')):
             coin_list=db.getfav(user_name)
-            coin_list=coin_list.split(",")
+            if(coin_list):
+                coin_list=coin_list.split(",")
+            else:
+                coin_list=[]
             if(message.text in coin_list):
                 bot.send_message(message.chat.id,"Pair Already Exist")
                 msg=bot.send_message(message.chat.id,"Enter the Pair Again(Ex- BTCUSDT): ")
@@ -394,10 +429,9 @@ def ytsearch(message):
     for result in data['items']:
         if(result["snippet"]['channelTitle'] in yt_channels):
             bot.send_message(message.chat.id,f"https://www.youtube.com/watch?v={result['id']['videoId']}")
-@bot.message_handler(commands=['Help'])
+@bot.message_handler(commands=['help'])
 def help(message):
-    bot.send_message(message.chat.id,"Hlo all I am here to make users friendly crypto service..................")
-
+    bot.send_message(message.chat.id," /signup - Here, User should create an account by entering the UserId and Password, then a Google Authenticator Key with qr code will be generated. The user should enter the Totp (Time based One time password) every time to login.\n\n/login - Users should enter the username and password to login.\n\n/Coins - In this command user should enter the coin symbol that are available in Binance(World's Leading Crypto Exchange), then available pairs for the  same will be displayed by the bot,user should select a pair.\n\t1. /price - Here users can view the current price of the pair that they choose.\n\t2. /recent_trade - Here users can view the top 5 recent trades of that particular coin pair from Binance.\n\t3.  /bid_ask - Here the user can view the top 5 bids(selling order) and ask(buying order) of that particular pair.\n\n/official_sites - Here, Bot will ask for the coin name or symbol to display its official site where users can get an original link and also can do their own research on that particular coin.In addition ,It also displays the official Reddit Account & Technical documentation link for the same.\n\n/g_search - Here, users can search anything about crypto where top results will be produced from verified websites like cointelegraph, cyptomarketcal, coindesk and more. No  other content will be produced apart from crypto.\n\n/fav_coin - Here, users can create their own favourite list by adding and removing the coins and view their list by clicking this command for quick access.\n\n/youtube - Here, Users should enter the coin name,results from top 20 youtubers will be produced.\n\n/view_fav - Here, users can view their favourite list of coins and their price.\n\n/help - User gets a detailed explanation about the functions and the commands available in CryptoCham.\n\n/logout - Users can log-out from the bot by clicking this command.")
 @bot.message_handler(commands=['logout'])
 def logout(message):
     if(db.getfield(message.chat.id,'status','login')=='yes'):

@@ -2,9 +2,9 @@ import psycopg2
 import confi
 #connect
 conn = psycopg2.connect(
-    host="localhost",
-    database="postgres",
-    user="postgres",
+    host="ec2-3-231-112-124.compute-1.amazonaws.com",
+    database="d6ufld22v8kd0p",
+    user="xdlrmbvicmvqzl",
     password=confi.dbpass)
 cur = conn.cursor()
 #insert new row
@@ -32,6 +32,11 @@ def checkdata(data, field,table):
 # display field if already exist
 def getfield(data,field,table):
   sql=f"select {field} from {table} where chatid={data}"
+  cur.execute(sql)
+  data = cur.fetchall()
+  return data[0][0]
+def gettotp(data):
+  sql=f"select totp from signup where username='{data}'"
   cur.execute(sql)
   data = cur.fetchall()
   return data[0][0]
